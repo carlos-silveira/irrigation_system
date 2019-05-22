@@ -1,0 +1,23 @@
+.buttonadd{
+    -fx-background-color:#6bce6e;
+    -fx-text-fill: #FFFFFF;
+}
+.buttonadd:hover{
+
+    -fx-background-color:#509b53;
+}
+.buttonadd:pressed {
+    -fx-background-color:#328235;
+}
+.hum{
+    -fx-background-color:#808080;
+    -fx-text-fill: #FFFFFF;
+}
+.rain{
+    -fx-background-color:#3299FF;
+    -fx-text-fill: #FFFFFF;
+}
+.status{
+    -fx-background-color:#FF1919;
+    -fx-text-fill: #FFFFFF;
+}
