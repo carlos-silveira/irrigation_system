@@ -22,7 +22,7 @@ public class Controller  {
         /* Guardamos el objeto de la conexion como la conexion en si porque
          * mas adelante necesitamos ambos. */
 //        objConexion = new ConexionMySQL("u5818148_carlos", "=jkst[RHJunx", "u5818148_criptas", "62.210.247.90", 3306);
-        objConexion = new ConexionMySQL("root", "", "prueba", "localhost", 3306);
+        objConexion = new ConexionMySQL("root", "", "sistemaRiego", "localhost", 3306);
         try {
             estado = objConexion.conectar();
             conexion = objConexion.getConexion();
