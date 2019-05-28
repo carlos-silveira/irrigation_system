@@ -18,6 +18,7 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
+        new Arduino(new ConexionMySQL("root", "", "sistemaRiego", "localhost", 3306));
         launch(args);
     }
 }
