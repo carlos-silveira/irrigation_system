@@ -13,7 +13,6 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
    <center>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
@@ -71,7 +70,7 @@
             </GridPane>
             <HBox alignment="CENTER">
                <children>
-                  <Button alignment="CENTER" mnemonicParsing="false" styleClass="buttonadd" stylesheets="@styles.css" text="Activar el sistema de riego" />
+                  <Button fx:id="btnActivate" alignment="CENTER" mnemonicParsing="false" styleClass="buttonadd" stylesheets="@styles.css" text="Activar el sistema de riego" />
                </children>
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -79,28 +78,17 @@
             </HBox>
             <HBox prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <LineChart>
+                  <LineChart fx:id="lc_intake" title="Ejemplo">
                     <xAxis>
                       <CategoryAxis side="BOTTOM" />
                     </xAxis>
                     <yAxis>
-                      <NumberAxis side="LEFT" />
+                      <NumberAxis side="LEFT" fx:id="xAxis" />
                     </yAxis>
                   </LineChart>
                </children>
             </HBox>
-            <HBox prefHeight="100.0" prefWidth="200.0">
-               <children>
-                  <LineChart>
-                    <xAxis>
-                      <CategoryAxis side="BOTTOM" />
-                    </xAxis>
-                    <yAxis>
-                      <NumberAxis side="LEFT" />
-                    </yAxis>
-                  </LineChart>
-               </children>
-            </HBox>
+            <HBox prefHeight="100.0" prefWidth="200.0" />
          </children>
       </VBox>
    </center>
