@@ -80,7 +80,7 @@
                <children>
                   <LineChart fx:id="lc_intake" title="Ejemplo">
                     <xAxis>
-                      <CategoryAxis side="BOTTOM" />
+                      <NumberAxis side="BOTTOM" />
                     </xAxis>
                     <yAxis>
                       <NumberAxis side="LEFT" fx:id="xAxis" />
