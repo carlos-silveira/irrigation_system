@@ -215,7 +215,8 @@ public void initialize(){
                     LocalDate localDate = result.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     int month = localDate.getMonthValue();
                     //Hours (day option)
-                    int hour = (int)(result.getDate().getTime() % 86400000) / 3600000;
+//                    int hour = (int)(result.getDate().getTime() % 86400000) / 3600000;
+                    int hour = cal.get(Calendar.HOUR);
                     if (uB == 12){
                         xAxisValue= month;
 
@@ -227,7 +228,6 @@ public void initialize(){
                         xAxisValue= hour;
                         LocalDate ld = dPDay.getValue();
                         filter = ld.getDayOfMonth();
-
                         if(filter == dayOfMonth){
                             series1.getData().add(new XYChart.Data<>(xAxisValue, result.getLiters()));
                         }
@@ -249,6 +249,8 @@ public void initialize(){
 
                 if (series1.getData().size() > WINDOW_SIZE)
                     series1.getData().remove(0);
+
+
             });
         }, 0, 1, TimeUnit.SECONDS);
 
