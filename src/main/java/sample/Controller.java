@@ -24,7 +24,9 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class Controller  extends Application{
@@ -71,7 +73,7 @@ public void initialize(){
 }
 
     private void getData(){
-        String query = "SELECT * FROM Estado WHERE ID=1";
+        String query = "SELECT * FROM estado WHERE ID=1";
         ResultSet data = objConexion.consultar(query);
 
         try {
@@ -112,9 +114,10 @@ public void initialize(){
             return date;
         }
     }
-    public  Consumption getValues() {
+    public List<Consumption> getValues() {
         double lit = 0;
         String d="31/12/1998";
+        List<Consumption> respuesta = new ArrayList<>();
 
         String query2 = "SELECT * FROM consumo ";
         ResultSet data = objConexion.consultar(query2);
@@ -124,21 +127,24 @@ public void initialize(){
 
                 lit= Double.parseDouble(data.getString("litros"));
                 d= data.getString("fecha");
+                Date da = null;
+                try {
+                    dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+                    da = dateFormat.parse(d);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                respuesta.add(new Consumption(lit, da) );
+
 
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        Date da = null;
-        try {
-            dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
-            da = dateFormat.parse(d);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
 
 
-        return new Consumption(lit, da);
+
+        return respuesta;
     }
     private void makeLineChart(){
         xAxis = new CategoryAxis();
@@ -148,6 +154,7 @@ public void initialize(){
 
         lc_intake.setTitle("Consumo diario");
         lc_intake.setHorizontalGridLinesVisible(true);
+        lc_intake.setAnimated(false);
 
         // Set Name for Series
         series1.setName("Agua en litros");
@@ -169,11 +176,17 @@ public void initialize(){
                 // get current time
                 Date now = new Date();
                 // put random number with current time
-                Consumption result = getValues();
+                List<Consumption> results = getValues();
                 dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
-                System.out.println(result.getLiters() +"___"+  dateFormat.format(result.getDate()));
+                series1.getData().clear();
+                for(Consumption result:results) {
 
-                series1.getData().add(new XYChart.Data<>(simpleDateFormat.format(result.getDate()), result.getLiters()));
+                    System.out.println(result.getLiters() +"___"+  dateFormat.format(result.getDate()));
+
+
+                    series1.getData().add(new XYChart.Data<>(simpleDateFormat.format(result.getDate()), result.getLiters()));
+                }
+
 
                 if (series1.getData().size() > WINDOW_SIZE)
                     series1.getData().remove(0);
