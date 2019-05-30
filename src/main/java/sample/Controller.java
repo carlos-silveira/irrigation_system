@@ -13,10 +13,10 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.Background;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -27,7 +27,12 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
@@ -41,7 +46,7 @@ public class Controller  extends Application{
 
     private static final int MAX_DATA_POINTS = 20;
     private int xSeriesData = 0;
-    private XYChart.Series<String, Number> series1 = new XYChart.Series<>();
+    private XYChart.Series<Number, Number> series1 = new XYChart.Series<>();
     private ExecutorService executor;
     private ConcurrentLinkedQueue<Number> dataQ1 = new ConcurrentLinkedQueue<>();
 
@@ -49,30 +54,34 @@ public class Controller  extends Application{
     private long lastTimerCall;
     private AnimationTimer timer;
     int randomN;
-    public int status,rain;
+    public int status,rain,uB,xAxisValue,filter;
     private DateFormat dateFormat;
     private boolean comunicacionEncender = false;
 
     @FXML
-    LineChart<String, Number> lc_intake;
-    @FXML
-    private CategoryAxis xAxis;
-    @FXML
-    NumberAxis yAxis;
+    HBox gra;
     @FXML
     Button btnActivate;
     @FXML
     Label humiditylb,rainlb,statuslb ;
+    @FXML
+    DatePicker dPDay;
+    @FXML
+    ComboBox CmbMonth;
+    @FXML
+    Button btnYear;
 public void initialize(){
 
     String estado = conectarSQL();
     System.out.println(estado);
-
+    uB=12;
+    filter=5;
     makeLineChart();
 //    getValueSerial();
 
-    getData();
+
     btnActivate.setOnAction(actionEvent -> activarSistema());
+    btnYear.setOnAction(actionEvent -> changetoYear());
     Thread hiloBoton = new Thread(() -> escucharCambioEnComunicacion());
     hiloBoton.start();
 
@@ -135,7 +144,7 @@ public void initialize(){
                 d= data.getString("fecha");
                 Date da = null;
                 try {
-                    dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+                    dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
                     da = dateFormat.parse(d);
                 } catch (ParseException e) {
                     e.printStackTrace();
@@ -153,12 +162,18 @@ public void initialize(){
         return respuesta;
     }
     private void makeLineChart(){
-        xAxis = new CategoryAxis();
+
+        LineChart<Number, Number> lc_intake;
+
+         NumberAxis xAxis;
+
+        NumberAxis yAxis;
+        xAxis = new NumberAxis(1, uB, 1);
 
         yAxis = new NumberAxis();
 
-
-        lc_intake.setTitle("Consumo diario");
+        lc_intake= new LineChart<>(xAxis,yAxis);
+        lc_intake.setTitle("Consumo");
         lc_intake.setHorizontalGridLinesVisible(true);
         lc_intake.setAnimated(false);
 
@@ -167,6 +182,9 @@ public void initialize(){
 
         // Add Chart Series
         lc_intake.getData().addAll(series1);
+
+        gra.getChildren().addAll(lc_intake);
+        gra.setHgrow(lc_intake, Priority.ALWAYS);
         final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
 
         // setup a scheduled executor to periodically put data into the chart
@@ -176,21 +194,56 @@ public void initialize(){
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             // get a random integer between 0-10
             Integer random = ThreadLocalRandom.current().nextInt(10);
-
+            xAxis.setUpperBound(uB);
             // Update the chart
             Platform.runLater(() -> {
                 // get current time
                 Date now = new Date();
+                getData();
                 // put random number with current time
                 List<Consumption> results = getValues();
-                dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+
                 series1.getData().clear();
                 for(Consumption result:results) {
+//                    dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+//                    System.out.println(result.getLiters() +"___"+  dateFormat.format(result.getDate()));
+                    //Day of Month (show month)
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(result.getDate()); //Assuming this is date2 variable from your code snippet
+                    int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+                    //Month (year option)
+                    LocalDate localDate = result.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    int month = localDate.getMonthValue();
+                    //Hours (day option)
+                    int hour = (int)(result.getDate().getTime() % 86400000) / 3600000;
+                    if (uB == 12){
+                        xAxisValue= month;
 
-                    System.out.println(result.getLiters() +"___"+  dateFormat.format(result.getDate()));
+
+                        series1.getData().add(new XYChart.Data<>(xAxisValue, result.getLiters()));
+
+                    }
+                    if (uB == 24){
+                        xAxisValue= hour;
+                        LocalDate ld = dPDay.getValue();
+                        filter = ld.getDayOfMonth();
+
+                        if(filter == dayOfMonth){
+                            series1.getData().add(new XYChart.Data<>(xAxisValue, result.getLiters()));
+                        }
+                    }
+                    if (uB == 31){
+                        xAxisValue= dayOfMonth;
+                       filter= CmbMonth.getSelectionModel().getSelectedIndex()+1;
+                       if(filter == month){
+                           series1.getData().add(new XYChart.Data<>(xAxisValue, result.getLiters()));
+                       }
+
+                    }
 
 
-                    series1.getData().add(new XYChart.Data<>(simpleDateFormat.format(result.getDate()), result.getLiters()));
+
+
                 }
 
 
@@ -278,5 +331,14 @@ public void initialize(){
         }
     }
 
+    public void changetoYear(){
+        uB=12;
+    }
+    public void changetoMonth(){
+        uB=31;
+    }
+    public void changetoDay(){
+        uB=24;
+    }
 
 }
