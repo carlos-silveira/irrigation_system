@@ -9,13 +9,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLOutput;
 import java.time.LocalDateTime;
 
 public class Arduino {
     private SerialPort comPort;
     private ConexionMySQL conexion;
 
-    private  int ultimoVolumen = 0;
+    private  double ultimoVolumen = 0;
     private String ultimaFecha = "";
 
     private Boolean encender = false;
@@ -49,11 +50,18 @@ public class Arduino {
                 boolean encenderDB = r.getBoolean(2);
                 if(encenderDB != encender) {
                     OutputStream out = comPort.getOutputStream();
-                    out.write("a".getBytes());
+                    if (encender) {
+                        out.write("a".getBytes());
+                        System.out.println("Apagando...");
+
+                    } else {
+                        out.write("p".getBytes());
+                        System.out.println("Prendiendo...");
+                    }
                     out.close();
                     encender = encenderDB;
                 }
-                System.out.println("Encender: "+encender);
+//                System.out.println("Encender: "+encender);
 
             }
         } catch (Exception e) {
@@ -63,7 +71,7 @@ public class Arduino {
     }
 
     private void getValueSerial(){
-        comPort = SerialPort.getCommPorts()[1];
+        comPort = SerialPort.getCommPorts()[0];
         System.out.println(comPort.getSystemPortName());
         comPort.openPort();
         boolean b = comPort.addDataListener(new SerialPortDataListener() {
@@ -77,7 +85,7 @@ public class Arduino {
                 if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE)
                     return;
                 InputStream in = comPort.getInputStream();
-                byte[] buffer = new byte[8];
+                byte[] buffer = new byte[12];
                 String message = "";
                 int len = 0;
                 try {
@@ -94,7 +102,7 @@ public class Arduino {
 
                     if(datos.length == 4) {
                         ResultSet resultSet = conexion.consultar("INSERT INTO estado VALUES(1," +datos[1]+ "," +datos[2]+ ","+datos[0]+") ON DUPLICATE KEY UPDATE humedad=" +datos[1]+ ", lluvia=" +datos[2]+ ", encendido="+datos[0]);
-                        int volumen = Integer.parseInt(datos[3]) - ultimoVolumen;
+                        double volumen = Double.parseDouble(datos[3]) - ultimoVolumen;
                         LocalDateTime fecha = LocalDateTime.now();
                         String fechaStr = fecha.toString().split(":")[0];
                         System.out.println(fecha.toString().split(":")[0]);
