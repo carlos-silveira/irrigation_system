@@ -6,6 +6,8 @@ import com.fazecast.jSerialComm.SerialPortEvent;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
@@ -14,6 +16,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Background;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -48,6 +51,7 @@ public class Controller  extends Application{
     int randomN;
     public int status,rain;
     private DateFormat dateFormat;
+    private boolean comunicacionEncender = false;
 
     @FXML
     LineChart<String, Number> lc_intake;
@@ -68,7 +72,9 @@ public void initialize(){
 //    getValueSerial();
 
     getData();
-
+    btnActivate.setOnAction(actionEvent -> activarSistema());
+    Thread hiloBoton = new Thread(() -> escucharCambioEnComunicacion());
+    hiloBoton.start();
 
 }
 
@@ -218,5 +224,59 @@ public void initialize(){
         super.stop();
         scheduledExecutorService.shutdownNow();
     }
+
+    public void activarSistema() {
+        ResultSet data = objConexion.consultar("Select * from comunicacion");
+        try {
+            if(data.next()) {
+                String query = "Update comunicacion set encender = ";
+                if(data.getBoolean("encender")) {
+                    query += "false";
+                } else {
+                    query += "true";
+                }
+                objConexion.consultar(query);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void escucharCambioEnComunicacion() {
+        while (true) {
+            ResultSet data = objConexion.consultar("Select * from comunicacion");
+            try {
+                if(data.next()) {
+                    if(comunicacionEncender != data.getBoolean("encender")) {
+                        if(comunicacionEncender) {
+                            Platform.runLater(() -> {
+                                btnActivate.setText("Activar el sistema de riego");
+                                btnActivate.getStyleClass().remove("buttondanger");
+                                btnActivate.getStyleClass().add("buttonadd");
+                            });
+                            comunicacionEncender = false;
+                        } else {
+                            Platform.runLater(() -> {
+                                btnActivate.setText("Desactivar el sistema de riego");
+                                btnActivate.getStyleClass().remove("buttonadd");
+                                btnActivate.getStyleClass().add("buttondanger");
+                            });
+                            comunicacionEncender = true;
+                        }
+                    }
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 }

@@ -2,12 +2,22 @@
     -fx-background-color:#6bce6e;
     -fx-text-fill: #FFFFFF;
 }
+.buttondanger{
+    -fx-background-color: #ff041a;
+    -fx-text-fill: #FFFFFF;
+}
 .buttonadd:hover{
 
     -fx-background-color:#509b53;
 }
 .buttonadd:pressed {
     -fx-background-color:#328235;
+}
+.buttondanger:hover {
+    -fx-background-color: #ff4634;
+}
+.buttondanger:pressed {
+    -fx-background-color: #ff0003;
 }
 .hum{
     -fx-background-color:#808080;
