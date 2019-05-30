@@ -39,7 +39,7 @@ public class Controller  extends Application{
     private XYChart.Series<String, Number> series1 = new XYChart.Series<>();
     private ExecutorService executor;
     private ConcurrentLinkedQueue<Number> dataQ1 = new ConcurrentLinkedQueue<>();
-    private SerialPort comPort;
+
     private int voltage = 0;
     private long lastTimerCall;
     private AnimationTimer timer;
@@ -181,38 +181,7 @@ public void initialize(){
         }, 0, 1, TimeUnit.SECONDS);
 
     }
-    private void getValueSerial(){
-                comPort = SerialPort.getCommPorts()[0];
-        comPort.openPort();
-        boolean b = comPort.addDataListener(new SerialPortDataListener() {
-            @Override
-            public int getListeningEvents() {
-                return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
-            }
 
-            @Override
-            public void serialEvent(SerialPortEvent event) {
-                if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE)
-                    return;
-                InputStream in = comPort.getInputStream();
-                byte[] buffer = new byte[3];
-                String message = "";
-                int len = 0;
-                try {
-                    len = in.read(buffer);
-                } catch (IOException e) {
-                }
-                if (len > 0) {
-                    message = new String(buffer);
-                }
-                try {
-                    voltage = Integer.parseInt(message.trim());
-//                    System.out.println(voltage);
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        });
-    }
     private String conectarSQL() {
         String estado = null;
         /* Guardamos el objeto de la conexion como la conexion en si porque
