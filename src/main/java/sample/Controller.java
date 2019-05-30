@@ -135,6 +135,17 @@ public void initialize(){
         List<Consumption> respuesta = new ArrayList<>();
 
         String query2 = "SELECT * FROM consumo ";
+        switch (uB) {
+            case 24:
+                query2 = "SELECT * FROM consumo;";
+                break;
+            case 12:
+                query2 = "Select id, fecha, sum(litros) litros from consumo group by MONTH(fecha), YEAR(fecha)";
+                break;
+            case 31:
+                query2 = "Select id, fecha, sum(litros) litros from consumo group by MONTH(fecha), YEAR(fecha), DAY(fecha)";
+                break;
+        }
         ResultSet data = objConexion.consultar(query2);
 
         try {
