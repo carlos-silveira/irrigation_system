@@ -30,7 +30,7 @@
                   <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="hum" stylesheets="@styles.css">
                      <children>
                         <Label styleClass="hum" stylesheets="@styles.css" text="Porcentaje de humedad" />
-                        <Label styleClass="hum" text="0%" />
+                        <Label fx:id="humiditylb" styleClass="hum" text="0%" />
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -42,7 +42,7 @@
                   <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="rain" stylesheets="@styles.css" GridPane.columnIndex="1">
                      <children>
                         <Label styleClass="rain" stylesheets="@styles.css" text="Lluvia" />
-                        <Label styleClass="rain" stylesheets="@styles.css" text="Esta lloviendo" />
+                        <Label fx:id="rainlb" styleClass="rain" stylesheets="@styles.css" text="Esta lloviendo" />
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -54,7 +54,7 @@
                   <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="status" stylesheets="@styles.css" GridPane.columnIndex="2">
                      <children>
                         <Label styleClass="status" stylesheets="@styles.css" text="Estado" />
-                        <Label styleClass="status" stylesheets="@styles.css" text="Apagado" />
+                        <Label fx:id="statuslb" styleClass="status" stylesheets="@styles.css" text="Apagado" />
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -70,7 +70,7 @@
             </GridPane>
             <HBox alignment="CENTER">
                <children>
-                  <Button fx:id="btnActivate" alignment="CENTER" mnemonicParsing="false" styleClass="buttonadd" stylesheets="@styles.css" text="Activar el sistema de riego" />
+                  <Button fx:id="btnActivate" alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="35.0" mnemonicParsing="false" styleClass="buttonadd" stylesheets="@styles.css" text="Activar el sistema de riego" HBox.hgrow="ALWAYS" />
                </children>
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -78,12 +78,12 @@
             </HBox>
             <HBox prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <LineChart fx:id="lc_intake" title="Ejemplo">
+                  <LineChart fx:id="lc_intake" minHeight="240.0" title="Ejemplo" HBox.hgrow="ALWAYS">
                     <xAxis>
-                      <CategoryAxis side="BOTTOM" />
+                      <CategoryAxis side="BOTTOM" fx:id="xAxis" />
                     </xAxis>
                     <yAxis>
-                      <NumberAxis side="LEFT" fx:id="xAxis" />
+                      <NumberAxis fx:id="yAxis" side="LEFT" />
                     </yAxis>
                   </LineChart>
                </children>

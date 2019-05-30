@@ -5,6 +5,7 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
@@ -12,33 +13,50 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.*;
 
 public class Controller  extends Application{
     private static ConexionMySQL objConexion;
     private Alert resultado;
     private Connection conexion;
+    final int WINDOW_SIZE = 10;
+    private ScheduledExecutorService scheduledExecutorService;
+
     private static final int MAX_DATA_POINTS = 20;
     private int xSeriesData = 0;
-    private XYChart.Series<Number, Number> series1 = new XYChart.Series<>();
+    private XYChart.Series<String, Number> series1 = new XYChart.Series<>();
     private ExecutorService executor;
     private ConcurrentLinkedQueue<Number> dataQ1 = new ConcurrentLinkedQueue<>();
     private SerialPort comPort;
     private int voltage = 0;
+    private long lastTimerCall;
+    private AnimationTimer timer;
+    int randomN;
+    public int status,rain;
+    private DateFormat dateFormat;
 
     @FXML
-    LineChart<Number, Number> lc_intake;
+    LineChart<String, Number> lc_intake;
     @FXML
-    private NumberAxis xAxis;
+    private CategoryAxis xAxis;
+    @FXML
+    NumberAxis yAxis;
     @FXML
     Button btnActivate;
+    @FXML
+    Label humiditylb,rainlb,statuslb ;
 public void initialize(){
 
     String estado = conectarSQL();
@@ -47,25 +65,85 @@ public void initialize(){
     makeLineChart();
 //    getValueSerial();
 
-    executor = Executors.newCachedThreadPool(r -> {
-        Thread thread = new Thread(r);
-        thread.setDaemon(true);
-        return thread;
-    });
+    getData();
 
-    AddToQueue addToQueue = new AddToQueue();
-    executor.execute(addToQueue);
-    //-- Prepare Timeline
-    prepareTimeline();
+
 }
 
+    private void getData(){
+        String query = "SELECT * FROM Estado WHERE ID=1";
+        ResultSet data = objConexion.consultar(query);
 
+        try {
+            while (data.next()) {
+                humiditylb.setText(data.getString("humedad"));
+                rain = Integer.parseInt(data.getString("lluvia"));
+                if (rain == 0 ){
+                    rainlb.setText("No esta lloviendo.");
+                }else if (rain == 1){
+                    rainlb.setText("Esta lloviendo.");
+                }
+                status= Integer.parseInt(data.getString("encendido"));
+                if (status == 0 ){
+                    statuslb.setText("Esta apagado.");
+                }else if (status == 1){
+                    statuslb.setText("Esta encendido.");
+                }
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    static final class Consumption {
+        private final double liters;
+        private  Date date;
+
+        public Consumption(double liters, Date date) {
+            this.liters = liters;
+            this.date = date;
+        }
+
+        public double getLiters() {
+            return liters;
+        }
+
+        public Date getDate() {
+            return date;
+        }
+    }
+    public  Consumption getValues() {
+        double lit = 0;
+        String d="31/12/1998";
+
+        String query2 = "SELECT * FROM consumo ";
+        ResultSet data = objConexion.consultar(query2);
+
+        try {
+            while (data.next()) {
+
+                lit= Double.parseDouble(data.getString("litros"));
+                d= data.getString("fecha");
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        Date da = null;
+        try {
+            dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            da = dateFormat.parse(d);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+
+        return new Consumption(lit, da);
+    }
     private void makeLineChart(){
-        xAxis = new NumberAxis(0, MAX_DATA_POINTS, MAX_DATA_POINTS / 10);
-        xAxis.setTickLabelsVisible(false);
-        xAxis.setTickMarkVisible(false);
-        xAxis.setMinorTickVisible(false);
+        xAxis = new CategoryAxis();
 
+        yAxis = new NumberAxis();
 
 
         lc_intake.setTitle("Consumo diario");
@@ -76,6 +154,32 @@ public void initialize(){
 
         // Add Chart Series
         lc_intake.getData().addAll(series1);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+
+        // setup a scheduled executor to periodically put data into the chart
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+        // put dummy data onto graph per second
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            // get a random integer between 0-10
+            Integer random = ThreadLocalRandom.current().nextInt(10);
+
+            // Update the chart
+            Platform.runLater(() -> {
+                // get current time
+                Date now = new Date();
+                // put random number with current time
+                Consumption result = getValues();
+                dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+                System.out.println(result.getLiters() +"___"+  dateFormat.format(result.getDate()));
+
+                series1.getData().add(new XYChart.Data<>(simpleDateFormat.format(result.getDate()), result.getLiters()));
+
+                if (series1.getData().size() > WINDOW_SIZE)
+                    series1.getData().remove(0);
+            });
+        }, 0, 1, TimeUnit.SECONDS);
+
     }
     private void getValueSerial(){
                 comPort = SerialPort.getCommPorts()[0];
@@ -124,56 +228,13 @@ public void initialize(){
         }
         return estado;
     }
-
-    private class AddToQueue implements Runnable {
-        public void run() {
-            try {
-//                dataQ1.add(voltage);
-                int randomN= (int) (100 * Math.random() - 5);
-          dataQ1.add(randomN);
-
-                Thread.sleep(300);
-                executor.execute(this);
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    //-- Timeline gets called in the JavaFX Main thread
-    private void prepareTimeline() {
-        // Every frame to take any data from queue and add to chart
-        new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                addDataToSeries();
-            }
-        }.start();
-    }
-
-    private void addDataToSeries() {
-        for (int i = 0; i < 20; i++) { //-- add 20 numbers to the plot+
-            if (dataQ1.isEmpty()) break;
-            series1.getData().add(new XYChart.Data<>(xSeriesData++, dataQ1.remove()));
-        }
-        // remove points to keep us at no more than MAX_DATA_POINTS
-        if (series1.getData().size() > MAX_DATA_POINTS) {
-            series1.getData().remove(0, series1.getData().size() - MAX_DATA_POINTS);
-        }
-        // update
-        xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
-        xAxis.setUpperBound(xSeriesData - 1);
-    }
-
-
     @Override
     public void start(Stage primaryStage) {
-
     }
-
-    public void stop() {
+    public void stop() throws Exception {
 //        comPort.closePort();
+        super.stop();
+        scheduledExecutorService.shutdownNow();
     }
-
 
 }
