@@ -216,7 +216,7 @@ public void initialize(){
                     int month = localDate.getMonthValue();
                     //Hours (day option)
 //                    int hour = (int)(result.getDate().getTime() % 86400000) / 3600000;
-                    int hour = cal.get(Calendar.HOUR);
+                    int hour = cal.get(Calendar.HOUR_OF_DAY);
                     if (uB == 12){
                         xAxisValue= month;
 
